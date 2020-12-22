@@ -4,6 +4,7 @@ import Layout from './Layout';
 import DayHeader from './DayHeader';
 import WeekHeader from './WeekHeader';
 import MonthHeader from './MonthHeader';
+import HourHeader from './HourHeader';
 import Grid from './Grid';
 import Labels from './Labels';
 import LinkLine from './LinkLine';
@@ -11,6 +12,7 @@ import Bar from './Bar';
 import getStyles from './styles';
 
 const UNIT = {
+  hour: DAY / 28 / 24,
   day: DAY / 28,
   week: 7 * DAY / 56,
   month: 30 * DAY / 56
@@ -52,6 +54,17 @@ export default function Gantt({
         thickWidth={thickWidth}
         maxTextWidth={maxTextWidth}
       />
+     {viewMode === 'hour' ? (
+        <HourHeader
+          styles={styles}
+          unit={unit}
+          height={height}
+          offsetY={offsetY}
+          minTime={minTime}
+          maxTime={maxTime}
+          maxTextWidth={maxTextWidth}
+        />
+      ) : null}
       {viewMode === 'day' ? (
         <DayHeader
           styles={styles}

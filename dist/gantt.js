@@ -6,11 +6,11 @@
 
 	function createCommonjsModule(fn, basedir, module) {
 		return module = {
-		  path: basedir,
-		  exports: {},
-		  require: function (path, base) {
-	      return commonjsRequire(path, (base === undefined || base === null) ? module.path : base);
-	    }
+			path: basedir,
+			exports: {},
+			require: function (path, base) {
+				return commonjsRequire(path, (base === undefined || base === null) ? module.path : base);
+			}
 		}, fn(module, module.exports), module.exports;
 	}
 
@@ -133,6 +133,18 @@
 	  d.setDate(d.getDate() + days);
 	  return d;
 	}
+	function addHours(date, hour) {
+	  var d = new Date(date.valueOf());
+
+	  if (d.getHours + hour == 24) {
+	    d.setDate(d.getDate() + 1);
+	    d.setHours(0);
+	  } else {
+	    d.setHours(d.getHours() + hour);
+	  }
+
+	  return d;
+	}
 	function getDates(begin, end) {
 	  var dates = [];
 	  var s = new Date(begin);
@@ -141,6 +153,18 @@
 	  while (s.getTime() <= end) {
 	    dates.push(s.getTime());
 	    s = addDays(s, 1);
+	  }
+
+	  return dates;
+	}
+	function getHours(begin, end) {
+	  var dates = [];
+	  var s = new Date(begin);
+	  s.setMinutes(0);
+
+	  while (s.getTime() <= end) {
+	    dates.push(s.getTime());
+	    s = addHours(s, 1);
 	  }
 
 	  return dates;
@@ -464,7 +488,9 @@
 		__proto__: null,
 		DAY: DAY,
 		addDays: addDays,
+		addHours: addHours,
 		getDates: getDates,
+		getHours: getHours,
 		textWidth: textWidth,
 		formatMonth: formatMonth,
 		formatDay: formatDay,
@@ -743,6 +769,102 @@
 	    styles: styles,
 	    unit: unit,
 	    months: months,
+	    offsetY: offsetY,
+	    minTime: minTime,
+	    maxTime: maxTime,
+	    maxTextWidth: maxTextWidth
+	  }), ticks);
+	}
+
+	function Hour(_ref) {
+	  var styles = _ref.styles,
+	      dates = _ref.dates,
+	      unit = _ref.unit,
+	      offsetY = _ref.offsetY,
+	      minTime = _ref.minTime,
+	      maxTime = _ref.maxTime,
+	      maxTextWidth = _ref.maxTextWidth;
+	  var days = dates.filter(function (v) {
+	    return new Date(v).getHours() === 0;
+	  });
+	  console.log(days);
+	  days.unshift(minTime);
+	  days.push(maxTime);
+	  var ticks = [];
+	  var x0 = maxTextWidth;
+	  var y2 = offsetY / 2;
+	  var len = days.length - 1;
+
+	  for (var i = 0; i < len; i++) {
+	    var cur = new Date(days[i]);
+	    var str = formatDay(cur);
+	    var x = x0 + (days[i] - minTime) / unit;
+	    var t = (days[i + 1] - days[i]) / unit;
+	    ticks.push(h("g", null, h("line", {
+	      x1: x,
+	      x2: x,
+	      y1: 0,
+	      y2: y2,
+	      style: styles.line
+	    }), t > 50 ? h("text", {
+	      x: x + t / 2,
+	      y: offsetY * 0.25,
+	      style: styles.text3
+	    }, str) : null));
+	  }
+
+	  return h("g", null, ticks);
+	}
+
+	function HourHeader(_ref) {
+	  var styles = _ref.styles,
+	      unit = _ref.unit,
+	      minTime = _ref.minTime,
+	      maxTime = _ref.maxTime,
+	      height = _ref.height,
+	      offsetY = _ref.offsetY,
+	      maxTextWidth = _ref.maxTextWidth;
+	  var dates = getHours(minTime, maxTime);
+	  var ticks = [];
+	  var x0 = maxTextWidth;
+	  var y0 = offsetY / 2;
+	  var RH = height - y0;
+	  var len = dates.length - 1;
+
+	  for (var i = 0; i < len; i++) {
+	    var cur = new Date(dates[i]);
+	    var day = cur.getDay();
+	    var x = x0 + (dates[i] - minTime) / unit;
+	    var t = (dates[i + 1] - dates[i]) / unit;
+	    ticks.push(h("g", null, day === 0 || day === 6 ? h("rect", {
+	      x: x,
+	      y: y0,
+	      width: t,
+	      height: RH,
+	      style: styles.week
+	    }) : null, h("line", {
+	      x1: x,
+	      x2: x,
+	      y1: y0,
+	      y2: offsetY,
+	      style: styles.line
+	    }), h("text", {
+	      x: x + t / 2,
+	      y: offsetY * 0.75,
+	      style: styles.text3
+	    }, cur.getHours()), i === len - 1 ? h("line", {
+	      x1: x + t,
+	      x2: x + t,
+	      y1: y0,
+	      y2: offsetY,
+	      style: styles.line
+	    }) : null));
+	  }
+
+	  return h("g", null, h(Hour, {
+	    styles: styles,
+	    unit: unit,
+	    dates: dates,
 	    offsetY: offsetY,
 	    minTime: minTime,
 	    maxTime: maxTime,
@@ -1214,6 +1336,7 @@
 	}
 
 	var UNIT = {
+	  hour: DAY / 28 / 24,
 	  day: DAY / 28,
 	  week: 7 * DAY / 56,
 	  month: 30 * DAY / 56
@@ -1265,7 +1388,15 @@
 	    offsetY: offsetY,
 	    thickWidth: thickWidth,
 	    maxTextWidth: maxTextWidth
-	  }), viewMode === 'day' ? h(DayHeader, {
+	  }), viewMode === 'hour' ? h(HourHeader, {
+	    styles: styles,
+	    unit: unit,
+	    height: height,
+	    offsetY: offsetY,
+	    minTime: minTime,
+	    maxTime: maxTime,
+	    maxTextWidth: maxTextWidth
+	  }) : null, viewMode === 'day' ? h(DayHeader, {
 	    styles: styles,
 	    unit: unit,
 	    height: height,

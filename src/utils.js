@@ -6,6 +6,17 @@ export function addDays(date, days) {
   return d;
 }
 
+export function addHours(date, hour) {
+    const d = new Date(date.valueOf());
+    if ((d.getHours + hour) == 24){
+        d.setDate(d.getDate() + 1);
+        d.setHours(0);
+    }else{
+        d.setHours(d.getHours() + hour);
+    }
+    return d;
+}
+
 export function getDates(begin, end) {
   const dates = [];
   let s = new Date(begin);
@@ -15,6 +26,17 @@ export function getDates(begin, end) {
     s = addDays(s, 1);
   }
   return dates;
+}
+
+export function getHours(begin, end) {
+    const dates = [];
+    let s = new Date(begin);
+    s.setMinutes(0)
+    while (s.getTime() <= end) {
+      dates.push(s.getTime());
+      s = addHours(s, 1);
+    }
+    return dates;
 }
 
 let ctx = null;
